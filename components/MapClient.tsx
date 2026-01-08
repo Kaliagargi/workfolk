@@ -1,26 +1,79 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import "leaflet/dist/leaflet.css";
+import {MapContainer,
+  TileLayer,
+  Marker,
+  useMapEvents,
+} from "react-leaflet";
 
 export default function MapClient() {
+  const [ready, setReady] = useState(false);
+  const [point, setPoint] = useState<{ lat: number; lon: number } | null>(null);
+  const [ndwi, setNdwi] = useState<number | null>(null);
+  const [ndwiTile, setNdwiTile] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    console.log("Map loaded on client");
+    import("leaflet").then((L) => {
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl:
+          "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
+      setReady(true);
+    });
   }, []);
 
+  async function fetchNdwi(lat: number, lon: number) {
+    try {
+      setLoading(true);
+     // const API = process.env.NEXT_PUBLIC_API_URL!;
+      //const res = await fetch(
+       // `${API}/ndwi?lat=${lat}&lon=${lon}`,
+       // { headers: { "ngrok-skip-browser-warning": "true" } }
+      //);
+      //const data = await res.json();
+      //setNdwi(data.mean_ndwi);
+      //setNdwiTile(data.ndwi_tile_url);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function ClickHandler() {
+    useMapEvents({
+      click(e: any) {
+        const { lat, lng } = e.latlng;
+        setPoint({ lat, lon: lng });
+        fetchNdwi(lat, lng);
+      },
+    });
+    return null;
+  }
+
+  if (!ready) return <p>Loading map…</p>;
+
   return (
-    <div
-      style={{
-        height: "100vh",
-        width: "100%",
-        backgroundColor: "#0f172a",
-        color: "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "24px"
-      }}
-    >
-      Map will render here
-    </div>
+    <>
+      <MapContainer
+        center={[20, 78]}
+        zoom={5}
+        style={{ height: "500px", width: "100%" }}
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <ClickHandler />
+        {point && <Marker position={[point.lat, point.lon]} />}
+        {ndwiTile && <TileLayer url={ndwiTile} opacity={0.6} />}
+      </MapContainer>
+
+      {loading && <p>Fetching NDWI…</p>}
+      {ndwi !== null && <p>Mean NDWI: <b>{ndwi.toFixed(3)}</b></p>}
+    </>
   );
 }
