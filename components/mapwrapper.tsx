@@ -1,12 +1,15 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
-const MapClient = dynamic(
-  () => import("./MapClient"),
-  { ssr: false }
-);
+export default function mapwrapper({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
 
-export default function MapWrapper() {
-  return <MapClient />;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return <>{children}</>;
 }

@@ -1,18 +1,14 @@
-"use client";
-
-import dynamic from "next/dynamic";
-
-const MapClient = dynamic(
-  () => import("../components/MapClient"),
-  { ssr: false }
-);
+import ClientOnly from "@/components/mapwrapper";
+import MapClient from "@/components/MapClient";
 
 export default function Home() {
   return (
-    <main style={{ padding: "20px" }}>
+    <main style={{ padding: 20 }}>
       <h1>NDWI Viewer</h1>
-      <p>Click on the map to compute NDWI</p>
-      <MapClient />
+
+      <ClientOnly>
+        <MapClient />
+      </ClientOnly>
     </main>
   );
 }
