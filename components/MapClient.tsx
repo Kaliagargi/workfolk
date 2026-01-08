@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+
 export default function MapClient() {
   const [Map, setMap] = useState<any>(null);
   const [point, setPoint] = useState<{ lat: number; lon: number } | null>(null);
   const [ndwi, setNdwi] = useState<number | null>(null);
   const [ndwiTile, setNdwiTile] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     async function loadLeaflet() {
@@ -36,13 +39,24 @@ export default function MapClient() {
             const lon = e.latlng.lng;
 
             setPoint({ lat, lon });
+          setLoading(true);
+const API = process.env.NEXT_PUBLIC_API_URL;
 
-            fetch(`http://192.168.29.14:8000/ndwi?lat=${lat}&lon=${lon}`)
-              .then((res) => res.json())
-              .then((data) => {
-                setNdwi(data.mean_ndwi);
-                setNdwiTile(data.ndwi_tile_url);
-              });
+fetch(`${API}/ndwi?lat=${lat}&lon=${lon}`, {
+  headers: {
+    "ngrok-skip-browser-warning": "true",
+  },
+})
+  .then((res) => res.json())
+  .then((data) => {
+    setNdwi(data.mean_ndwi);
+    setNdwiTile(data.ndwi_tile_url);
+  })
+  .catch((err) => console.error("Fetch error:", err))
+
+
+  .finally(() => setLoading(false));
+
           },
         });
         return null;
